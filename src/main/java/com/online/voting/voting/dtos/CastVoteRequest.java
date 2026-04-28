@@ -13,15 +13,17 @@ public class CastVoteRequest {
 
     @NotNull(message = "Voter ID is required")
     private UUID voterId;
-    
+
     @NotNull(message = "Election ID is required")
     private UUID electionId;
-    
+
     @NotNull(message = "Position ID is required")
     private UUID positionId;
-    
+
     @NotNull(message = "Candidate ID is required")
     private UUID candidateId;
+
+    private String idempotencyKey;
 
     public UUID getVoterId() {
         return voterId;
@@ -53,5 +55,13 @@ public class CastVoteRequest {
 
     public void setCandidateId(UUID candidateId) {
         this.candidateId = candidateId;
+    }
+
+    public String getIdempotencyKey() {
+        return idempotencyKey;
+    }
+
+    public void setIdempotencyKey(String idempotencyKey) {
+        this.idempotencyKey = idempotencyKey;
     }
 }

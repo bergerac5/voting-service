@@ -19,8 +19,7 @@ import jakarta.persistence.UniqueConstraint;
         @Index(name = "idx_position", columnList = "position_id"),
         @Index(name = "idx_election", columnList = "election_id")
 }, uniqueConstraints = {
-        @UniqueConstraint(name = "uk_voter_position_candidate", columnNames = { "voter_id", "position_id",
-                "candidate_id" })
+        @UniqueConstraint(name = "uk_voter_position", columnNames = { "voter_id", "position_id" })
 })
 public class Vote {
 

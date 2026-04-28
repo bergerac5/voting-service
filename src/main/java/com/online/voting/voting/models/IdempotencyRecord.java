@@ -16,6 +16,8 @@ import jakarta.persistence.UniqueConstraint;
 @Table(name = "idempotency_records", uniqueConstraints = {
         @UniqueConstraint(columnNames = { "idempotency_key" })
 })
+// This entity is used to store idempotency keys for vote submissions to prevent
+// duplicate votes
 public class IdempotencyRecord {
 
     @Id

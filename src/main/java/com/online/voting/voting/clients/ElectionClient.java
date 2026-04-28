@@ -12,14 +12,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import com.online.voting.voting.dtos.ApiResponse;
 import com.online.voting.voting.dtos.ElectionResponse;
 
-@FeignClient(name = "election-service", url = "http://localhost:8084"/*
-                                                                      * , configuration = FeignConfig.class, fallback =
-                                                                      * ElectionClientFeedBack.class
-                                                                      */)
+@FeignClient(name = "api-gateway", url = "http://localhost:8080"/*
+                                                                 * , configuration = FeignConfig.class, fallback =
+                                                                 * ElectionClientFeedBack.class
+                                                                 */)
 public interface ElectionClient {
 
     @GetMapping("/elections/{electionId}")
-    ApiResponse<ElectionResponse> getElection(@PathVariable UUID electionId);
+    ApiResponse<ElectionResponse> getElectionById(@PathVariable UUID electionId);
 
     // bulk endpoint to get multiple elections by their IDs
     @PostMapping("/elections/bulk")

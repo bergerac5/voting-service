@@ -24,6 +24,7 @@ import com.online.voting.voting.handler.DuplicateVoteException;
 import com.online.voting.voting.handler.ElectionNotFoundException;
 import com.online.voting.voting.handler.PositionNotFoundException;
 import com.online.voting.voting.handler.VoterNotFoundException;
+import com.online.voting.voting.handler.VotingNotAllowedException;
 import com.online.voting.voting.models.OutboxEvent;
 import com.online.voting.voting.models.Vote;
 import com.online.voting.voting.repository.OutboxRepository;
@@ -63,23 +64,32 @@ public class VoteService {
     @Transactional
     public CastVoteResponse castVote(CastVoteRequest request) {
 
-        // 1. Validate all entities exist (Feign handles 404 via exceptions)
+        // 1. Election FIRST (fail fast)
+        ElectionResponse election = validate(
+                electionClient.getElectionById(request.getElectionId()),
+                new ElectionNotFoundException(
+                        String.format("Election not found with ID: %s", request.getElectionId())));
 
+        // 🔥 Enforce rule (Option 3)
+        if (!election.isCanVote()) {
+            throw new VotingNotAllowedException("Election is not open for voting");
+        }
+
+        // 2. Validate other entities
         VoterResponse voter = validate(
                 voterClient.getVoterById(request.getVoterId()),
-                new VoterNotFoundException(String.format("Voter not found with ID: %s", request.getVoterId())));
-
-        ElectionResponse election = validate(
-                electionClient.getElection(request.getElectionId()),
-                new ElectionNotFoundException(String.format("Election not found with ID: %s", request.getElectionId())));
+                new VoterNotFoundException(
+                        String.format("Voter not found with ID: %s", request.getVoterId())));
 
         PositionResponse position = validate(
                 positionClient.getPosition(request.getPositionId()),
-                new PositionNotFoundException(String.format("Position not found with ID: %s", request.getPositionId())));
+                new PositionNotFoundException(
+                        String.format("Position not found with ID: %s", request.getPositionId())));
 
         CandidateResponse candidate = validate(
                 candidateClient.getCandidate(request.getCandidateId()),
-                new CandidateNotFoundException(String.format("Candidate not found with ID: %s", request.getCandidateId())));
+                new CandidateNotFoundException(
+                        String.format("Candidate not found with ID: %s", request.getCandidateId())));
 
         // 2. Create vote
         Vote vote = new Vote();

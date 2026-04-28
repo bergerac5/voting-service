@@ -111,6 +111,14 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ex.getMessage()));
     }
 
+    // Voting not allowed (e.g. election not active)
+    @ExceptionHandler(VotingNotAllowedException.class)
+    public ResponseEntity<ApiResponse<?>> handleVotingNotAllowed(VotingNotAllowedException ex) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error(ex.getMessage()));
+    }
+
     /**
      * External service unavailable
      */

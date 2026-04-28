@@ -10,7 +10,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import com.online.voting.voting.dtos.ApiResponse;
 import com.online.voting.voting.dtos.PositionResponse;
 
-@FeignClient(name = "election-service", url = "http://localhost:8085"/*, configuration = FeignConfig.class, fallback = PositionCleintFeedBack.class */)
+@FeignClient(name = "api-gateway", url = "http://localhost:8080"/*
+                                                                 * , configuration = FeignConfig.class, fallback =
+                                                                 * PositionCleintFeedBack.class
+                                                                 */)
 public interface PositionClient {
 
     @GetMapping("/positions/{positionId}")

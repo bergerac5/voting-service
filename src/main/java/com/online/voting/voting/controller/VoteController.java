@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.online.voting.voting.dtos.ApiResponse;
 import com.online.voting.voting.dtos.CastVoteRequest;
+import com.online.voting.voting.dtos.CastVoteResponse;
 import com.online.voting.voting.service.VoteService;
 
 @RestController
@@ -19,10 +20,10 @@ public class VoteController {
     }
 
     @PostMapping
-    public ApiResponse<String> vote(@RequestBody CastVoteRequest request) {
+    public ApiResponse<CastVoteResponse> vote(@RequestBody CastVoteRequest request) {
 
-        voteService.castVote(request);
+        CastVoteResponse response = voteService.castVote(request);
 
-        return ApiResponse.success("Vote cast successfully");
+        return ApiResponse.success("Vote cast successfully", response);
     }
 }

@@ -6,13 +6,15 @@ public class ElectionResponse {
 
     private UUID electionId;
     private String title;
+    private boolean canVote;
 
     public ElectionResponse() {
     }
 
-    public ElectionResponse(UUID electionId, String title) {
+    public ElectionResponse(UUID electionId, String title, boolean canVote) {
         this.electionId = electionId;
         this.title = title;
+        this.canVote = canVote;
     }
 
     // Getters and setters
@@ -32,4 +34,11 @@ public class ElectionResponse {
         this.title = title;
     }
 
+    public boolean isCanVote() {
+        return canVote;
+    }
+
+    public void setCanVote(boolean canVote) {
+        this.canVote = canVote;
+    }
 }

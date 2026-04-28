@@ -14,7 +14,7 @@ import com.online.voting.voting.dtos.ElectionResponse;
 public class ElectionClientFeedBack implements ElectionClient {
 
     @Override
-    public ApiResponse<ElectionResponse> getElection(UUID id) {
+    public ApiResponse<ElectionResponse> getElectionById(UUID id) {
         throw new com.online.voting.voting.handler.ServiceUnavailableException("Election service unavailable");
     }
 
