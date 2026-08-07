@@ -19,19 +19,80 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-  
-  kafka:
-    bootstrap-servers: localhost:9092
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      properties:
-        spring.json.add.type.headers: true
+
+  cloud:
+    function:
+      definition: voteCasted
+
+    stream:
+      bindings:
+
+        # ================= OUTGOING EVENTS =================
+        voteCasted-out-0:
+          destination: vote-casted
+          contentType: application/json
+
+      kafka:
+        binder:
+          brokers: localhost:9092
+          auto-create-topics: true
+          configuration:
+            spring.json.trusted.packages: com.online.voting.events
+
   main:
     allow-bean-definition-overriding: true
+
+  feign:
+  circuitbreaker:
+    enabled: true
+
+resilience4j:
+  circuitbreaker:
+    circuitbreaker:
+    instances:
+      voterClient:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        ignore-exceptions:
+          - com.online.voting.voting.handler.VoterNotFoundException
+      electionClient:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        ignore-exceptions:
+          - com.online.voting.voting.handler.ElectionNotFoundException
+      positionClient:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        ignore-exceptions:
+          - com.online.voting.voting.handler.PositionNotFoundException
+      candidateClient:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        ignore-exceptions:
+          - com.online.voting.voting.handler.CandidateNotFoundException
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+  health:
+    kafka:
+      enabled: true
+    db:
+      enabled: true
+
 logging:
   level:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.cloud.stream: DEBUG
+    org.springframework.integration: DEBUG
     org.springframework.cloud.openfeign: DEBUG
-
