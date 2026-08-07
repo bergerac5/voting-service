@@ -2,48 +2,66 @@ package com.online.voting.voting.service;
 
 import java.util.List;
 
-import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.online.voting.events.voting.VoteEvent;
 import com.online.voting.voting.models.OutboxEvent;
 import com.online.voting.voting.repository.OutboxRepository;
 
 @Service
-//
 public class OutboxPublisher {
 
     private final OutboxRepository outboxRepository;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final StreamBridge streamBridge;
     private final ObjectMapper objectMapper;
 
-    public OutboxPublisher(OutboxRepository outboxRepository,
-            KafkaTemplate<String, Object> kafkaTemplate,
+    public OutboxPublisher(
+            OutboxRepository outboxRepository,
+            StreamBridge streamBridge,
             ObjectMapper objectMapper) {
+
         this.outboxRepository = outboxRepository;
-        this.kafkaTemplate = kafkaTemplate;
+        this.streamBridge = streamBridge;
         this.objectMapper = objectMapper;
     }
 
-    @Scheduled(fixedDelay = 5000) // every 5 sec
+    @Scheduled(fixedDelay = 5000)
+    @Transactional
     public void publishEvents() {
+        System.out.println("Publisher running...");
 
         List<OutboxEvent> events = outboxRepository.findBySentFalse();
 
         for (OutboxEvent event : events) {
-            try {
-                Object payload = objectMapper.readValue(event.getPayload(), Object.class);
 
-                kafkaTemplate.send(event.getTopic(), payload);
+            VoteEvent payload = deserialize(event);
 
-                event.setSent(true);
-                outboxRepository.save(event);
+            streamBridge.send(
+                    "voteCasted-out-0",
+                    payload);
 
-            } catch (Exception e) {
-                // log and retry later
-                System.err.println("Failed to publish event " + event.getId() + ": " + e.getMessage());
-            }
+            event.setSent(true);
+
+            outboxRepository.save(event);
+        }
+    }
+
+    private VoteEvent deserialize(
+            OutboxEvent outboxEvent) {
+
+        try {
+
+            return objectMapper.readValue(
+                    outboxEvent.getPayload(),
+                    VoteEvent.class);
+
+        } catch (Exception ex) {
+
+            throw new RuntimeException(ex);
         }
     }
 }

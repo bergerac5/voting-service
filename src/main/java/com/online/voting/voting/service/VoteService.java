@@ -1,7 +1,5 @@
 package com.online.voting.voting.service;
 
-import java.time.LocalDateTime;
-
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,7 +16,6 @@ import com.online.voting.voting.dtos.CastVoteResponse;
 import com.online.voting.voting.dtos.ElectionResponse;
 import com.online.voting.voting.dtos.PositionResponse;
 import com.online.voting.voting.dtos.VoterResponse;
-import com.online.voting.voting.events.KafkaProducerService;
 import com.online.voting.voting.handler.CandidateNotFoundException;
 import com.online.voting.voting.handler.DuplicateVoteException;
 import com.online.voting.voting.handler.ElectionNotFoundException;
@@ -35,7 +32,6 @@ import static com.online.voting.voting.utils.ClientValidator.validate;
 public class VoteService {
 
     private final VoteRepository voteRepository;
-    private final KafkaProducerService kafkaProducer;
     private final ElectionClient electionClient;
     private final PositionClient positionClient;
     private final CandidateClient candidateClient;
@@ -44,7 +40,6 @@ public class VoteService {
     private final ObjectMapper objectMapper;
 
     public VoteService(VoteRepository voteRepository,
-            KafkaProducerService kafkaProducer,
             ElectionClient electionClient,
             PositionClient positionClient,
             CandidateClient candidateClient,
@@ -52,7 +47,6 @@ public class VoteService {
             OutboxRepository outboxRepository,
             ObjectMapper objectMapper) {
         this.voteRepository = voteRepository;
-        this.kafkaProducer = kafkaProducer;
         this.electionClient = electionClient;
         this.positionClient = positionClient;
         this.candidateClient = candidateClient;
@@ -61,9 +55,8 @@ public class VoteService {
         this.objectMapper = objectMapper;
     }
 
-    @Transactional
     public CastVoteResponse castVote(CastVoteRequest request) {
-
+        // Validation — NOT transactional, no DB connection held during these calls
         // 1. Election FIRST (fail fast)
         ElectionResponse election = validate(
                 electionClient.getElectionById(request.getElectionId()),
@@ -91,45 +84,34 @@ public class VoteService {
                 new CandidateNotFoundException(
                         String.format("Candidate not found with ID: %s", request.getCandidateId())));
 
-        // 2. Create vote
+        // Only the DB write is transactional
+        Vote vote = persistVoteAndOutbox(request);
+
+        return new CastVoteResponse(vote.getVoteId(), election.getTitle(), position.getName(),
+                buildCandidateName(candidate), "Voted successfully");
+    }
+
+    @Transactional
+    protected Vote persistVoteAndOutbox(CastVoteRequest request) {
         Vote vote = new Vote();
         vote.setVoterId(request.getVoterId());
         vote.setCandidateId(request.getCandidateId());
         vote.setElectionId(request.getElectionId());
         vote.setPositionId(request.getPositionId());
-        vote.setVotedAt(LocalDateTime.now());
 
-        // 3. Save vote safely (DB constraint handles duplicates)
         try {
             voteRepository.save(vote);
         } catch (DataIntegrityViolationException e) {
             throw new DuplicateVoteException("Voter has already voted for this position");
         }
 
-        // 4. Create event
-        VoteEvent voteEvent = new VoteEvent(
-                vote.getVoteId(),
-                vote.getElectionId(),
-                vote.getPositionId(),
-                vote.getCandidateId(),
-                vote.getVoterId());
-
-        // 5. Save to Outbox
         OutboxEvent outboxEvent = new OutboxEvent();
         outboxEvent.setTopic("vote-casted");
-        outboxEvent.setPayload(convertToJson(voteEvent));
-        outboxEvent.setSent(false);
-        outboxEvent.setCreatedAt(LocalDateTime.now());
-
+        outboxEvent.setPayload(convertToJson(new VoteEvent(vote.getVoteId(), vote.getElectionId(),
+                vote.getPositionId(), vote.getCandidateId(), vote.getVoterId(), vote.getVotedAt())));
         outboxRepository.save(outboxEvent);
 
-        // 6. Return response
-        return new CastVoteResponse(
-                vote.getVoteId(),
-                election.getTitle(),
-                position.getName(),
-                buildCandidateName(candidate),
-                "Voted successfully");
+        return vote;
     }
 
     // ✅ Helper: JSON conversion

@@ -5,21 +5,22 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 
+import com.online.voting.voting.clients.ServiceNames;
 import com.online.voting.voting.clients.VoterClient;
 import com.online.voting.voting.dtos.ApiResponse;
 import com.online.voting.voting.dtos.VoterResponse;
+import com.online.voting.voting.handler.ServiceUnavailableException;
 
 @Component
-public class VoterClientFeedback implements VoterClient {
+public class VoterClientFallback implements VoterClient {
 
     @Override
     public ApiResponse<VoterResponse> getVoterById(UUID voterId) {
-        throw new RuntimeException("Voter service unavailable!!!!!!!!!!");
+        throw new ServiceUnavailableException(ServiceNames.VOTER, "Voter service is currently unavailable");
     }
 
     @Override
     public ApiResponse<List<VoterResponse>> getVotersByIds(List<UUID> ids) {
-        return ApiResponse.error("Voter service unavailable");
+        throw new ServiceUnavailableException(ServiceNames.VOTER, "Voter service is currently unavailable");
     }
-
 }

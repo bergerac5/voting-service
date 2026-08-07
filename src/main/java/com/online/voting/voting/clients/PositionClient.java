@@ -7,13 +7,11 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import com.online.voting.voting.clients.feedback.PositionCleintFallback;
 import com.online.voting.voting.dtos.ApiResponse;
 import com.online.voting.voting.dtos.PositionResponse;
 
-@FeignClient(name = "api-gateway", url = "http://localhost:8080"/*
-                                                                 * , configuration = FeignConfig.class, fallback =
-                                                                 * PositionCleintFeedBack.class
-                                                                 */)
+@FeignClient(name = "api-gateway", url = "http://localhost:8080", fallback = PositionCleintFallback.class)
 public interface PositionClient {
 
     @GetMapping("/positions/{positionId}")

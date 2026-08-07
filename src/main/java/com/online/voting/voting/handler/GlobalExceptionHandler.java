@@ -13,10 +13,28 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.online.voting.voting.dtos.ApiResponse;
 
 import feign.FeignException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import jakarta.validation.ConstraintViolationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    /**
+     * Handle unauthorized access (401) and forbidden access (403) exceptions
+     * from Feign clients.
+     */
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ApiResponse<?>> handleUnauthorized(UnauthorizedException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ApiResponse<?>> handleForbidden(ForbiddenException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(ex.getMessage()));
+    }
 
     /**
      * Duplicate vote attempt
@@ -120,26 +138,19 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * External service unavailable
-     */
-    @ExceptionHandler(ServiceUnavailableException.class)
-    public ResponseEntity<ApiResponse<?>> handleCustomServiceUnavailable(ServiceUnavailableException ex) {
-
-        return ResponseEntity
-                .status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body(ApiResponse.error(ex.getMessage()));
-    }
-
-    /**
      * External service unavailable (Feign)
      */
-    @ExceptionHandler(FeignException.ServiceUnavailable.class)
-    public ResponseEntity<ApiResponse<?>> handleServiceUnavailable(FeignException.ServiceUnavailable ex) {
+    public ResponseEntity<ApiResponse<?>> handleServiceUnavailable(ServiceUnavailableException ex) {
+    log.warn("Service unavailable [{}]: {}", ex.getServiceName(), ex.getMessage()); // full URL, internal only
 
-        return ResponseEntity
-                .status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body(ApiResponse.error("External service unavailable"));
-    }
+    String clientMessage = String.format(
+            "The %s service is temporarily unavailable. Please try again shortly.",
+            ex.getServiceName());
+
+    return ResponseEntity
+            .status(HttpStatus.SERVICE_UNAVAILABLE)
+            .body(ApiResponse.error(clientMessage));
+}
 
     /**
      * Generic Feign error
