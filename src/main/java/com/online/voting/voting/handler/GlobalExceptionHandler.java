@@ -158,7 +158,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(FeignException.class)
     public ResponseEntity<ApiResponse<?>> handleFeignError(FeignException ex) {
-
+        log.error("Feign error: {}", ex.getMessage(), ex);
         return ResponseEntity
                 .status(HttpStatus.BAD_GATEWAY)
                 .body(ApiResponse.error("Error communicating with external service"));

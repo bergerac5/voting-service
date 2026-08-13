@@ -23,15 +23,11 @@ spring:
   cloud:
     function:
       definition: voteCasted
-
     stream:
       bindings:
-
-        # ================= OUTGOING EVENTS =================
         voteCasted-out-0:
           destination: vote-casted
           contentType: application/json
-
       kafka:
         binder:
           brokers: localhost:9092
@@ -42,13 +38,12 @@ spring:
   main:
     allow-bean-definition-overriding: true
 
-  feign:
+feign:
   circuitbreaker:
     enabled: true
 
 resilience4j:
   circuitbreaker:
-    circuitbreaker:
     instances:
       voterClient:
         sliding-window-size: 10
@@ -82,7 +77,6 @@ management:
     web:
       exposure:
         include: health,info
-
   health:
     kafka:
       enabled: true

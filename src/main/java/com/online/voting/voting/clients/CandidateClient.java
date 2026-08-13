@@ -9,11 +9,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import com.online.voting.voting.clients.feedback.CandidateClientFallback;
+import com.online.voting.voting.clients.feedback.CandidateClientFallbackFactory;
 import com.online.voting.voting.dtos.ApiResponse;
 import com.online.voting.voting.dtos.CandidateResponse;
 
-@FeignClient(name = "candidate-service", url = "http://localhost:8083", fallback = CandidateClientFallback.class)
+@FeignClient(name = "api-gateway", url = "http://localhost:8080", fallbackFactory = CandidateClientFallbackFactory.class)
 public interface CandidateClient {
     @GetMapping("/candidates/{candidateId}")
     ApiResponse<CandidateResponse> getCandidate(@PathVariable UUID candidateId);
