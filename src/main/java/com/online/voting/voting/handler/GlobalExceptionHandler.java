@@ -3,6 +3,8 @@ package com.online.voting.voting.handler;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,8 +15,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.online.voting.voting.dtos.ApiResponse;
 
 import feign.FeignException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import jakarta.validation.ConstraintViolationException;
 
 @RestControllerAdvice
@@ -140,17 +140,18 @@ public class GlobalExceptionHandler {
     /**
      * External service unavailable (Feign)
      */
+    @ExceptionHandler(ServiceUnavailableException.class)
     public ResponseEntity<ApiResponse<?>> handleServiceUnavailable(ServiceUnavailableException ex) {
-    log.warn("Service unavailable [{}]: {}", ex.getServiceName(), ex.getMessage()); // full URL, internal only
+        log.warn("Service unavailable [{}]: {}", ex.getServiceName(), ex.getMessage()); // full URL, internal only
 
-    String clientMessage = String.format(
-            "The %s service is temporarily unavailable. Please try again shortly.",
-            ex.getServiceName());
+        String clientMessage = String.format(
+                "The %s service is temporarily unavailable. Please try again shortly.",
+                ex.getServiceName());
 
-    return ResponseEntity
-            .status(HttpStatus.SERVICE_UNAVAILABLE)
-            .body(ApiResponse.error(clientMessage));
-}
+        return ResponseEntity
+                .status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ApiResponse.error(clientMessage));
+    }
 
     /**
      * Generic Feign error

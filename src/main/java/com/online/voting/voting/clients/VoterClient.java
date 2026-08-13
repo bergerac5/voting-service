@@ -9,11 +9,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import com.online.voting.voting.clients.feedback.VoterClientFallback;
+import com.online.voting.voting.clients.feedback.VoterClientFallbackFactory;
 import com.online.voting.voting.dtos.ApiResponse;
 import com.online.voting.voting.dtos.VoterResponse;
 
-@FeignClient(name = "api-gateway", url = "http://localhost:8080", fallback = VoterClientFallback.class)
+@FeignClient(name = "api-gateway", url = "http://localhost:8080", fallbackFactory = VoterClientFallbackFactory.class)
 public interface VoterClient {
 
     // Define methods to interact with voter service here: getVoterById,

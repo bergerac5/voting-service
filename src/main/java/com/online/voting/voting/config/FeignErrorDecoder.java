@@ -63,7 +63,7 @@ public class FeignErrorDecoder implements ErrorDecoder {
             return new ForbiddenException("Forbidden - Access denied");
         }
 
-        if (status == 500) {
+        if ((status == 500 || status == 503)) {
             String serviceName = resolveServiceName(url); // "voter", "election", "position", "candidate"
             return new ServiceUnavailableException(serviceName, "Downstream service unavailable: " + url);
         }
